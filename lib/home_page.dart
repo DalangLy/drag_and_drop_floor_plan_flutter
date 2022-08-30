@@ -40,11 +40,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _interactionViewerController = TransformationController();
     _interactionViewerController.addListener(() {
       setState(() {
-        interactionCanvasScale = _interactionViewerController.value.row2.b;
+        interactionCanvasScale = _interactionViewerController.value.row2.b.abs();
         interactionCanvasOffsetX = _interactionViewerController.value.row0.a.abs();
         interactionCanvasOffsetY = _interactionViewerController.value.row1.a.abs();
-        print('no zoom $interactionCanvasOffsetX');
-        print('with zoom ${interactionCanvasOffsetX * interactionCanvasScale}');
+        //print('hello');
+        // print('no zoom $interactionCanvasOffsetX');
+        // print('with zoom ${interactionCanvasOffsetX * interactionCanvasScale}');
       });
     });
 
@@ -145,17 +146,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   // onInteractionStart: (details) {
                   //   print('on interaction start');
                   // },
-                  // onInteractionUpdate: (details) {
-                  //   print('on interaction update');
-                  // },
+                  onInteractionUpdate: (details) {
+                    print('on interaction update ${details.scale}');
+                  },
                   transformationController: _interactionViewerController,
                   child: DragTarget<MyTable>(
                     builder: (BuildContext context, List<dynamic> accepted, List<dynamic> rejected,) {
                       return Container(
                         width: 5000,
-                        height: 3000,
+                        height: 3200,
                         decoration: const BoxDecoration(
-                          image: DecorationImage(image: AssetImage('assets/image.jpg'), fit: BoxFit.cover,),
+                          image: DecorationImage(image: AssetImage('assets/number.jpg'), fit: BoxFit.fitWidth,),
                           // gradient: LinearGradient(
                           //   begin: Alignment.topLeft,
                           //   end: Alignment(0.8, 1),
@@ -169,10 +170,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           //     Color(0xfff39060),
                           //     Color(0xffffb56b),
                           //   ],
-                          //   tileMode: TileMode.mirror,
-                          // ),
+                          //tileMode: TileMode.mirror,
+                          //),
                         ),
                         child: Stack(
+                          alignment: AlignmentDirectional.center,
                           children: objectsOnCanvas.map((e) {
                             return Positioned(
                               top: e.posY,
@@ -207,13 +209,26 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         ),
                       );
                     },
+                    onMove: (details) {
+                      print('offset on move ${interactionCanvasOffsetX}');
+                      //print('offset remaining ${(0.2*interactionCanvasOffsetX)}');
+                     // print('detail ${details.offset.dx}');
+                      print((0.2*details.offset.dx)+30);
+                    },
                     onAcceptWithDetails: (DragTargetDetails<MyTable> details) {
                       setState(() {
                         if(details.data.isOnStage){
                           objectsOnCanvas.removeWhere((element) => element.id == details.data.id);
                         }
                         objectsOnCanvas.add(
-                            MyTable(id: DateTime.now().millisecondsSinceEpoch.toString(), icon: details.data.icon, name: details.data.name, posX: details.offset.dx + interactionCanvasOffsetX , posY: (details.offset.dy - 124) + interactionCanvasOffsetY , isOnStage: true,)
+                            MyTable(
+                              id: DateTime.now().millisecondsSinceEpoch.toString(),
+                              icon: details.data.icon,
+                              name: details.data.name,
+                              posX: details.offset.dx + 300,// 100, 200, 300
+                              posY: (details.offset.dy - 124) + interactionCanvasOffsetY,
+                              isOnStage: true,
+                            )
                         );
                       },
                       );
