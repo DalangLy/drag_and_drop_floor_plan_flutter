@@ -11,8 +11,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin{
 
+  late TransformationController _interactionViewerController;
 
-  List<MyTable> myTableTypes = [
+  List<MyTable> availableObjects = [
     MyTable(id: '1', icon: 'assets/dining-table.png', name: 'Dining Table', ),
     MyTable(id: '2', icon: 'assets/round-table.png', name: 'Round Table'),
     MyTable(id: '៣', icon: 'assets/plant.png', name: 'Plant'),
@@ -21,14 +22,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   List<String> savedTables = [];
 
 
-  List<MyTable> onStageTables = [];
+  List<MyTable> objectsOnCanvas = [];
 
-  late AnimationController controller;
+  late AnimationController _trashBinAnimationController;
+
+  double interactionCanvasOffsetX = 0;
+  double interactionCanvasOffsetY = 0;
+  double interactionCanvasScale = 1;
 
   @override
   void initState() {
-    controller = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this, value: 100);
-    controller.forward();
+    //setup trash bin animation controller
+    _trashBinAnimationController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this, value: 100);
+    _trashBinAnimationController.forward();
+
+    //set up interaction viewer controller
+    _interactionViewerController = TransformationController();
+    _interactionViewerController.addListener(() {
+      setState(() {
+        interactionCanvasScale = _interactionViewerController.value.row2.b;
+        interactionCanvasOffsetX = _interactionViewerController.value.row0.a.abs();
+        interactionCanvasOffsetY = _interactionViewerController.value.row1.a.abs();
+        print('no zoom $interactionCanvasOffsetX');
+        print('with zoom ${interactionCanvasOffsetX * interactionCanvasScale}');
+      });
+    });
+
     super.initState();
   }
 
@@ -48,22 +67,22 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     Expanded(
                       flex: 5,
                       child: ListView.builder(
-                        itemCount: myTableTypes.length,
+                        itemCount: availableObjects.length,
                         itemBuilder: (context, index) {
                           return Draggable<MyTable>(
-                            data: myTableTypes[index],
+                            data: availableObjects[index],
                             feedback: Container(
                               color: Colors.transparent,
                               height: 100,
                               width: 100,
-                              child: Image(image: AssetImage(myTableTypes[index].icon)),
+                              child: Image(image: AssetImage(availableObjects[index].icon)),
                             ),
                             childWhenDragging: Container(
                               height: 100.0,
                               width: 100.0,
                               color: Colors.transparent,
                               child: Center(
-                                child: Image(image: AssetImage(myTableTypes[index].icon)),
+                                child: Image(image: AssetImage(availableObjects[index].icon)),
                                 //child: Text('${myTableTypes[index].name} Dragging'),
                               ),
                             ),
@@ -72,7 +91,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                               width: 100.0,
                               color: Colors.transparent,
                               child: Center(
-                                child: Image(image: AssetImage(myTableTypes[index].icon)),
+                                child: Image(image: AssetImage(availableObjects[index].icon)),
                                 // child: Column(
                                 //   children: [
                                 //     Image(image: AssetImage(myTableTypes[index].icon)),
@@ -94,21 +113,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             height: double.infinity,
                             child: Lottie.asset(
                                 'assets/ic_delete.json',
-                              controller: controller
+                              controller: _trashBinAnimationController
                             ),
                           );
                         },
                         onWillAccept: (data) {
-                          controller.repeat();
+                          _trashBinAnimationController.repeat();
                           return true;
                         },
                         onLeave: (data) {
-                          controller.animateTo(100);
+                          _trashBinAnimationController.animateTo(100);
                         },
                         onAccept: (data) {
                           setState(() {
-                            onStageTables.removeWhere((element) => element.id == data.id);
-                            controller.animateTo(100);
+                            objectsOnCanvas.removeWhere((element) => element.id == data.id);
+                            _trashBinAnimationController.animateTo(100);
                             //controller.stop();
                           });
                         },
@@ -118,56 +137,88 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 ),
               ),
               Expanded(
-                child: DragTarget<MyTable>(
-                  builder: (BuildContext context, List<dynamic> accepted, List<dynamic> rejected,) {
-                    return Container(
-                      color: const Color(0xFFe8e8e8),
-                      child: Stack(
-                        children: onStageTables.map((e) {
-                          return Positioned(
-                            top: e.posY,
-                            left: e.posX,
-                            child: Draggable<MyTable>(
-                              data: e,
-                              feedback: Container(
-                                color: Colors.transparent,
-                                height: 100,
-                                width: 100,
-                                child: Image(image: AssetImage(e.icon)),
-                              ),
-                              childWhenDragging: Container(
-                                height: 100.0,
-                                width: 100.0,
-                                color: Colors.transparent,
-                                child: const Center(
-                                  //child: Text('${e.name} Dragging'),
-                                ),
-                              ),
-                              child: Container(
-                                height: 100.0,
-                                width: 100.0,
-                                color: Colors.transparent,
-                                child: Center(
+                child: InteractiveViewer(
+                  constrained: false,
+                  // onInteractionEnd: (details) {
+                  //   print('on interaction end');
+                  // },
+                  // onInteractionStart: (details) {
+                  //   print('on interaction start');
+                  // },
+                  // onInteractionUpdate: (details) {
+                  //   print('on interaction update');
+                  // },
+                  transformationController: _interactionViewerController,
+                  child: DragTarget<MyTable>(
+                    builder: (BuildContext context, List<dynamic> accepted, List<dynamic> rejected,) {
+                      return Container(
+                        width: 5000,
+                        height: 3000,
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(image: AssetImage('assets/image.jpg'), fit: BoxFit.cover,),
+                          // gradient: LinearGradient(
+                          //   begin: Alignment.topLeft,
+                          //   end: Alignment(0.8, 1),
+                          //   colors: <Color>[
+                          //     Color(0xff1f005c),
+                          //     Color(0xff5b0060),
+                          //     Color(0xff870160),
+                          //     Color(0xffac255e),
+                          //     Color(0xffca485c),
+                          //     Color(0xffe16b5c),
+                          //     Color(0xfff39060),
+                          //     Color(0xffffb56b),
+                          //   ],
+                          //   tileMode: TileMode.mirror,
+                          // ),
+                        ),
+                        child: Stack(
+                          children: objectsOnCanvas.map((e) {
+                            return Positioned(
+                              top: e.posY,
+                              left: e.posX,
+                              child: Draggable<MyTable>(
+                                data: e,
+                                feedback: Container(
+                                  color: Colors.transparent,
+                                  height: 100,
+                                  width: 100,
                                   child: Image(image: AssetImage(e.icon)),
                                 ),
+                                childWhenDragging: Container(
+                                  height: 100.0,
+                                  width: 100.0,
+                                  color: Colors.transparent,
+                                  child: const Center(
+                                    //child: Text('${e.name} Dragging'),
+                                  ),
+                                ),
+                                child: Container(
+                                  height: 100.0,
+                                  width: 100.0,
+                                  color: Colors.transparent,
+                                  child: Center(
+                                    child: Image(image: AssetImage(e.icon)),
+                                  ),
+                                ),
                               ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    );
-                  },
-                  onAcceptWithDetails: (DragTargetDetails<MyTable> details) {
-                    setState(() {
-                      if(details.data.isOnStage){
-                        onStageTables.removeWhere((element) => element.id == details.data.id);
-                      }
-                      onStageTables.add(
-                          MyTable(id: DateTime.now().millisecondsSinceEpoch.toString(), icon: details.data.icon, name: details.data.name, posX: details.offset.dx, posY: details.offset.dy - 124, isOnStage: true,)
+                            );
+                          }).toList(),
+                        ),
                       );
                     },
-                    );
-                  },
+                    onAcceptWithDetails: (DragTargetDetails<MyTable> details) {
+                      setState(() {
+                        if(details.data.isOnStage){
+                          objectsOnCanvas.removeWhere((element) => element.id == details.data.id);
+                        }
+                        objectsOnCanvas.add(
+                            MyTable(id: DateTime.now().millisecondsSinceEpoch.toString(), icon: details.data.icon, name: details.data.name, posX: details.offset.dx + interactionCanvasOffsetX , posY: (details.offset.dy - 124) + interactionCanvasOffsetY , isOnStage: true,)
+                        );
+                      },
+                      );
+                    },
+                  ),
                 ),
               ),
               //control
@@ -196,7 +247,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                 }).toList();
 
                                 setState(() {
-                                  onStageTables = tt;
+                                  objectsOnCanvas = tt;
                                 });
                               }, child: Text('Saved ${index+1}'));
                             },
@@ -214,20 +265,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           ),
                           ElevatedButton(onPressed: (){
                             setState(() {
-                              List<Map<String, dynamic>> ff = onStageTables.map<Map<String, dynamic>>((e) {
+                              List<Map<String, dynamic>> ff = objectsOnCanvas.map<Map<String, dynamic>>((e) {
                                 return e.toJson();
                               }).toList();
                               savedTables.add(jsonEncode(ff));
-                              onStageTables.clear();
+                              objectsOnCanvas.clear();
                             });
                           },
                             child: const Text('Save New'),),
                         ],
-                      )
-                    )
+                      ),
+                    ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),
