@@ -210,10 +210,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       );
                     },
                     onMove: (details) {
-                      print('offset on move ${interactionCanvasOffsetX}');
+                     // print('offset on move ${interactionCanvasOffsetX}');
                       //print('offset remaining ${(0.2*interactionCanvasOffsetX)}');
                      // print('detail ${details.offset.dx}');
-                      print((0.2*details.offset.dx)+30);
+                      print((0.2*details.offset.dx));
                     },
                     onAcceptWithDetails: (DragTargetDetails<MyTable> details) {
                       setState(() {
