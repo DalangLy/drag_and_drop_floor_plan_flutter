@@ -146,6 +146,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   // onInteractionStart: (details) {
                   //   print('on interaction start');
                   // },
+                  scaleEnabled: false,
                   onInteractionUpdate: (details) {
                     print('on interaction update ${details.scale}');
                   },
@@ -156,22 +157,22 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         width: 5000,
                         height: 3200,
                         decoration: const BoxDecoration(
-                          image: DecorationImage(image: AssetImage('assets/number.jpg'), fit: BoxFit.fitWidth,),
-                          // gradient: LinearGradient(
-                          //   begin: Alignment.topLeft,
-                          //   end: Alignment(0.8, 1),
-                          //   colors: <Color>[
-                          //     Color(0xff1f005c),
-                          //     Color(0xff5b0060),
-                          //     Color(0xff870160),
-                          //     Color(0xffac255e),
-                          //     Color(0xffca485c),
-                          //     Color(0xffe16b5c),
-                          //     Color(0xfff39060),
-                          //     Color(0xffffb56b),
-                          //   ],
-                          //tileMode: TileMode.mirror,
-                          //),
+                          //image: DecorationImage(image: AssetImage('assets/number.jpg'), fit: BoxFit.fitWidth,),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment(0.8, 1),
+                            colors: <Color>[
+                              Color(0xff1f005c),
+                              Color(0xff5b0060),
+                              Color(0xff870160),
+                              Color(0xffac255e),
+                              Color(0xffca485c),
+                              Color(0xffe16b5c),
+                              Color(0xfff39060),
+                              Color(0xffffb56b),
+                            ],
+                          tileMode: TileMode.mirror,
+                          ),
                         ),
                         child: Stack(
                           alignment: AlignmentDirectional.center,
@@ -225,7 +226,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                               id: DateTime.now().millisecondsSinceEpoch.toString(),
                               icon: details.data.icon,
                               name: details.data.name,
-                              posX: details.offset.dx + 300,// 100, 200, 300
+                              posX: details.offset.dx + interactionCanvasOffsetX,// 100, 200, 300
                               posY: (details.offset.dy - 124) + interactionCanvasOffsetY,
                               isOnStage: true,
                             )
